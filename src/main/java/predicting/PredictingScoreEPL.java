@@ -1,15 +1,16 @@
-package stats;
+package predicting;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.ProtocolException;
 import java.net.URL;
 
-public class League implements ILeague{
+public class PredictingScoreEPL implements PredictingScore{
     @Override
-    public StringBuffer getStats(String league_name) throws Exception {
-        String url = "http://localhost:5000/api/stats-league/" + league_name;
+    public StringBuffer predictScore(String teamA, String teamB) throws Exception {
 
+        String url = "http://localhost:5000/api/predict-score/" + teamA + "/" + teamB;
         // Send an HTTP GET request to the API endpoint
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestMethod("GET");
