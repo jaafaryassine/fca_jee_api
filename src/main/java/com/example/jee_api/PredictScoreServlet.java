@@ -16,21 +16,44 @@ import java.net.URL;
 @WebServlet(name = "PredictScoreServlet", value = "/PredictScoreServlet")
 public class PredictScoreServlet extends HttpServlet {
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
         String teamA = request.getParameter("teamA");
         String teamB = request.getParameter("teamB");
-        try{
+        try {
             PredictingScore predictingScore = new PredictingScoreEPL();
-            StringBuffer responseBuffer = predictingScore.predictScore(teamA,teamB);
-            response.setContentType("application/json");
-            response.getWriter().write(responseBuffer.toString());
-        }
-        catch (Exception e) {
+            Thread predictingThread = new Thread(() -> {
+                try {
+                    StringBuffer responseBuffer = predictingScore.predictScore(teamA, teamB);
+                    synchronized(response) {
+                        response.setContentType("application/json");
+                        response.getWriter().write(responseBuffer.toString());
+                        response.notifyAll();
+                    }
+                } catch (Exception e) {
+                    synchronized(response) {
+                        JsonObject jsonResponse = new JsonObject();
+                        jsonResponse.addProperty("error", e.getMessage().toString());
+                        response.setContentType("application/json");
+                        try {
+                            response.getWriter().write(jsonResponse.toString());
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        response.notifyAll();
+                    }
+                }
+            });
+            predictingThread.start();
+            synchronized(response) {
+                response.wait();
+            }
+        } catch (Exception e) {
             JsonObject jsonResponse = new JsonObject();
-            jsonResponse.addProperty("error",e.getMessage().toString());
+            jsonResponse.addProperty("error", e.getMessage().toString());
             response.setContentType("application/json");
             response.getWriter().write(jsonResponse.toString());
         }
+
 
     }
 

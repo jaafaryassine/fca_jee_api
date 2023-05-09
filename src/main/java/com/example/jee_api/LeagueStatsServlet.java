@@ -32,8 +32,6 @@ public class LeagueStatsServlet extends HttpServlet {
             response.setContentType("application/json");
             response.getWriter().write(jsonResponse.toString());
         }
-
-
     }
 
     @Override
